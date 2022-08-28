@@ -89,10 +89,12 @@ ACTION awmarketplace_smartcontract::setmfee(uint64_t market_id, uint8_t fee)
 
 ACTION awmarketplace_smartcontract::validassets(name from, name to, vector<uint64_t> asset_ids, std::string memo)
 {
+    //check xem asset chuyển vào chợ có đúng không?
     if (memo.find("alien.worlds marketplace") != std::string::npos)
     {
         vector<assets_s> assets;
         assets_t own_assets = get_assets(get_self());
+
     }
 }
 
