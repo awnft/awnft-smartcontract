@@ -1,0 +1,422 @@
+{
+    "____comment": "This file was generated with eosio-abigen. DO NOT EDIT ",
+    "version": "eosio::abi/1.1",
+    "types": [],
+    "structs": [
+        {
+            "name": "ban",
+            "base": "",
+            "fields": [
+                {
+                    "name": "accounts",
+                    "type": "name[]"
+                }
+            ]
+        },
+        {
+            "name": "ban_t",
+            "base": "",
+            "fields": [
+                {
+                    "name": "accounts",
+                    "type": "name[]"
+                }
+            ]
+        },
+        {
+            "name": "base_token_s",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "sym",
+                    "type": "symbol"
+                },
+                {
+                    "name": "contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "buy_order_t",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "ask",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bid",
+                    "type": "asset"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "buymatch",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "closemarket",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "market_t",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "base_token",
+                    "type": "base_token_s"
+                },
+                {
+                    "name": "quote_nft",
+                    "type": "quote_nft_s"
+                },
+                {
+                    "name": "min_buy",
+                    "type": "asset"
+                },
+                {
+                    "name": "min_sell",
+                    "type": "uint16"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint8"
+                },
+                {
+                    "name": "frozen",
+                    "type": "bool"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "nft_s",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "template_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "quantity",
+                    "type": "uint16"
+                },
+                {
+                    "name": "contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "openmarket",
+            "base": "",
+            "fields": [
+                {
+                    "name": "base_con",
+                    "type": "name"
+                },
+                {
+                    "name": "base_sym",
+                    "type": "symbol"
+                },
+                {
+                    "name": "quote_t_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "quote_con",
+                    "type": "name"
+                },
+                {
+                    "name": "min_buy",
+                    "type": "asset"
+                },
+                {
+                    "name": "min_sell",
+                    "type": "uint16"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "order",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "ask",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bid",
+                    "type": "asset"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "pair_t",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "nft_pool",
+                    "type": "nft_s"
+                },
+                {
+                    "name": "token_pool",
+                    "type": "token_s"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "quote_nft_s",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "template_id",
+                    "type": "uint32"
+                },
+                {
+                    "name": "contract",
+                    "type": "name"
+                }
+            ]
+        },
+        {
+            "name": "sell_order_t",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "account",
+                    "type": "name"
+                },
+                {
+                    "name": "ask",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bid",
+                    "type": "asset"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "sellmatch",
+            "base": "",
+            "fields": []
+        },
+        {
+            "name": "sellreceipt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "sell_order",
+                    "type": "order"
+                }
+            ]
+        },
+        {
+            "name": "setmfee",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "fee",
+                    "type": "uint8"
+                }
+            ]
+        },
+        {
+            "name": "setmfrozen",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "frozen",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "token_s",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "quantity",
+                    "type": "asset"
+                },
+                {
+                    "name": "contract",
+                    "type": "name"
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "name": "ban",
+            "type": "ban",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "buymatch",
+            "type": "buymatch",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "closemarket",
+            "type": "closemarket",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "openmarket",
+            "type": "openmarket",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sellmatch",
+            "type": "sellmatch",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "sellreceipt",
+            "type": "sellreceipt",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setmfee",
+            "type": "setmfee",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "setmfrozen",
+            "type": "setmfrozen",
+            "ricardian_contract": ""
+        }
+    ],
+    "tables": [
+        {
+            "name": "ban_t",
+            "type": "ban_t",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "buyorder",
+            "type": "buy_order_t",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "markets",
+            "type": "market_t",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "pairs",
+            "type": "pair_t",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        },
+        {
+            "name": "sellorder",
+            "type": "sell_order_t",
+            "index_type": "i64",
+            "key_names": [],
+            "key_types": []
+        }
+    ],
+    "ricardian_clauses": [],
+    "variants": []
+}
