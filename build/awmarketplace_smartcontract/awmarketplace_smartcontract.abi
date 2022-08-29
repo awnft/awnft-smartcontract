@@ -4,6 +4,36 @@
     "types": [],
     "structs": [
         {
+            "name": "b_match_record",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "ask",
+                    "type": "uint16"
+                },
+                {
+                    "name": "bidder",
+                    "type": "name"
+                },
+                {
+                    "name": "bid",
+                    "type": "asset"
+                },
+                {
+                    "name": "market",
+                    "type": "market_s"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
             "name": "ban",
             "base": "",
             "fields": [
@@ -42,7 +72,7 @@
             ]
         },
         {
-            "name": "buy_order_t",
+            "name": "buy_order_s",
             "base": "",
             "fields": [
                 {
@@ -70,7 +100,26 @@
         {
             "name": "buymatch",
             "base": "",
-            "fields": []
+            "fields": [
+                {
+                    "name": "record",
+                    "type": "b_match_record"
+                }
+            ]
+        },
+        {
+            "name": "buyreceipt",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "buy_order",
+                    "type": "buy_order_s"
+                }
+            ]
         },
         {
             "name": "closemarket",
@@ -83,7 +132,7 @@
             ]
         },
         {
-            "name": "market_t",
+            "name": "market_s",
             "base": "",
             "fields": [
                 {
@@ -130,7 +179,7 @@
                 },
                 {
                     "name": "template_id",
-                    "type": "uint32"
+                    "type": "int32"
                 },
                 {
                     "name": "quantity",
@@ -177,32 +226,6 @@
             ]
         },
         {
-            "name": "order",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "account",
-                    "type": "name"
-                },
-                {
-                    "name": "ask",
-                    "type": "uint16"
-                },
-                {
-                    "name": "bid",
-                    "type": "asset"
-                },
-                {
-                    "name": "timestamp",
-                    "type": "uint32"
-                }
-            ]
-        },
-        {
             "name": "pair_t",
             "base": "",
             "fields": [
@@ -238,7 +261,7 @@
                 },
                 {
                     "name": "template_id",
-                    "type": "uint32"
+                    "type": "int32"
                 },
                 {
                     "name": "contract",
@@ -247,7 +270,37 @@
             ]
         },
         {
-            "name": "sell_order_t",
+            "name": "s_match_record",
+            "base": "",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "ask",
+                    "type": "asset"
+                },
+                {
+                    "name": "bidder",
+                    "type": "name"
+                },
+                {
+                    "name": "bid",
+                    "type": "uint16"
+                },
+                {
+                    "name": "market",
+                    "type": "market_s"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "uint32"
+                }
+            ]
+        },
+        {
+            "name": "sell_order_s",
             "base": "",
             "fields": [
                 {
@@ -260,11 +313,11 @@
                 },
                 {
                     "name": "ask",
-                    "type": "uint16"
+                    "type": "asset"
                 },
                 {
                     "name": "bid",
-                    "type": "asset"
+                    "type": "uint16"
                 },
                 {
                     "name": "timestamp",
@@ -275,7 +328,12 @@
         {
             "name": "sellmatch",
             "base": "",
-            "fields": []
+            "fields": [
+                {
+                    "name": "record",
+                    "type": "s_match_record"
+                }
+            ]
         },
         {
             "name": "sellreceipt",
@@ -287,7 +345,7 @@
                 },
                 {
                     "name": "sell_order",
-                    "type": "order"
+                    "type": "sell_order_s"
                 }
             ]
         },
@@ -350,6 +408,11 @@
             "ricardian_contract": ""
         },
         {
+            "name": "buyreceipt",
+            "type": "buyreceipt",
+            "ricardian_contract": ""
+        },
+        {
             "name": "closemarket",
             "type": "closemarket",
             "ricardian_contract": ""
@@ -389,29 +452,8 @@
             "key_types": []
         },
         {
-            "name": "buyorder",
-            "type": "buy_order_t",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "markets",
-            "type": "market_t",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
             "name": "pairs",
             "type": "pair_t",
-            "index_type": "i64",
-            "key_names": [],
-            "key_types": []
-        },
-        {
-            "name": "sellorder",
-            "type": "sell_order_t",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

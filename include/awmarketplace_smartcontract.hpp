@@ -11,7 +11,7 @@ public:
    using contract::contract;
    static constexpr name ATOMICASSETS_ACCOUNT = name("atomicassets");
 
-   struct s_order
+   struct sell_order_s
    {
       uint64_t id;
       name account;
@@ -21,7 +21,7 @@ public:
       uint64_t primary_key() const { return id; };
    };
 
-   struct b_order
+   struct buy_order_s
    {
       uint64_t id;
       name account;
@@ -29,53 +29,12 @@ public:
       asset bid;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
-   };
-
-   ACTION sellreceipt(uint64_t market_id, s_order sell_order);
-   ACTION buyreceipt(uint64_t market_id, b_order buy_order);
-   ACTION sellmatch();
-   ACTION buymatch();
-   ACTION ban(vector<name> accounts);
-   ACTION openmarket(name base_con, symbol base_sym, uint32_t quote_t_id, name quote_con, asset min_buy, uint16_t min_sell, uint8_t fee);
-   ACTION closemarket(uint64_t market_id);
-   ACTION setmfrozen(uint64_t market_id, uint64_t frozen);
-   ACTION setmfee(uint64_t market_id, uint8_t fee);
-
-   [[eosio::on_notify("atomicassets::transfer")]] void validassets(name from, name to, vector<uint64_t> asset_ids, std::string memo);
-
-private:
-   /*Table*/
-   TABLE buy_order_t
-   {
-      uint64_t id;
-      name account;
-      uint16_t ask;
-      asset bid;
-      uint32_t timestamp;
-      uint64_t primary_key() const { return id; };
-   };
-   typedef multi_index<name("buyorder"), buy_order_t> buy_order_s;
-
-   TABLE sell_order_t
-   {
-      uint64_t id;
-      name account;
-      asset ask;
-      uint16_t bid;
-      uint32_t timestamp;
-      uint64_t primary_key() const { return id; };
-   };
-   typedef multi_index<name("sellorder"), sell_order_t> sell_order_s;
-
-   TABLE ban_t
-   {
-      vector<name> accounts;
    };
 
    struct nft_s
    {
       uint64_t id;
-      uint32_t template_id;
+      int32_t template_id;
       uint16_t quantity;
       name contract;
       uint64_t primary_key() const { return id; };
@@ -100,12 +59,16 @@ private:
    struct quote_nft_s
    {
       uint64_t id;
-      uint32_t template_id;
+      int32_t template_id;
       name contract;
       uint64_t primary_key() const { return id; };
    };
 
-   TABLE market_t
+   /**
+    * @brief Struct market
+    *
+    */
+   struct market_s
    {
       uint64_t id;
       base_token_s base_token;
@@ -117,8 +80,61 @@ private:
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
    };
-   typedef eosio::multi_index<name("markets"), market_t> market_s;
-   market_s markets = market_s(get_self(), get_self().value);
+
+   /**
+    * @brief Struct buy match record
+    *
+    */
+   struct b_match_record
+   {
+      uint64_t id;
+      uint16_t ask;
+      name bidder;
+      asset bid;
+      market_s market;
+      uint32_t timestamp;
+      uint64_t primary_key() const { return id; };
+   };
+
+   /**
+    * @brief Struct buy match record
+    *
+    */
+   struct s_match_record
+   {
+      uint64_t id;
+      asset ask;
+      name bidder;
+      uint16_t bid;
+      market_s market;
+      uint32_t timestamp;
+      uint64_t primary_key() const { return id; };
+   };
+
+   ACTION buymatch(b_match_record record);
+   ACTION sellmatch(s_match_record record);
+   ACTION sellreceipt(uint64_t market_id, sell_order_s sell_order);
+   ACTION buyreceipt(uint64_t market_id, buy_order_s buy_order);
+   ACTION ban(vector<name> accounts);
+   ACTION openmarket(name base_con, symbol base_sym, uint32_t quote_t_id, name quote_con, asset min_buy, uint16_t min_sell, uint8_t fee);
+   ACTION closemarket(uint64_t market_id);
+   ACTION setmfrozen(uint64_t market_id, uint64_t frozen);
+   ACTION setmfee(uint64_t market_id, uint8_t fee);
+   [[eosio::on_notify("atomicassets::transfer")]] void matchassets(name from, name to, vector<uint64_t> asset_ids, std::string memo);
+   [[eosio::on_notify("eosio.token::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
+
+private:
+   /*Table*/
+   using buy_order_t = multi_index<name("buyorder"), buy_order_s>;
+
+   using sell_order_t = multi_index<name("sellorder"), sell_order_s>;
+
+   TABLE ban_t
+   {
+      vector<name> accounts;
+   };
+
+   using market_t = multi_index<name("markets"), market_s>;
 
    TABLE pair_t
    {
