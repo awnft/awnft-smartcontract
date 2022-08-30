@@ -98,12 +98,10 @@ ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint6
     // check xem asset chuyển vào chợ có đúng không?
     if (memo.find("awnftmarket") != std::string::npos)
     {
-        vector<assets_s> assets;
         char delim = '#';
         size_t start;
         size_t end = 0;
         vector<string> tmp;
-        // fee thật sự thu được tính theo công thức
         while ((start = memo.find_first_not_of(delim, end)) !=
                string::npos)
         {
@@ -117,7 +115,6 @@ ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint6
         if (market != markets.end())
         {
             assets_t own_assets = get_assets(get_self());
-            vector<assets_t> assets;
             for (auto &asset_id : asset_ids)
             {
                 auto guest_asset = own_assets.find(asset_id);
@@ -130,29 +127,92 @@ ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint6
         //  if match
 
         // else match
-        eosio::asset sell_quantity(std::stoi(tmp.at(2)), eosio::symbol("TLM", 4));
+        uint64_t ask_amount = std::stoi(tmp.at(2));
+        eosio::asset sell_quantity(ask_amount, eosio::symbol("TLM", 4));
         sell_order_t sellorder(get_self(), market_id);
-        uint16_t bid = asset_ids.size();
         sell_order_s sell_receipt = {
             sellorder.available_primary_key(),
             from,
             sell_quantity,
-            bid,
+            asset_ids,
             now()};
         action(permission_level{get_self(), name("active")}, get_self(),
                name("sellreceipt"),
-               std::make_tuple(get_self(), sell_receipt))
+               std::make_tuple(market_id, sell_receipt))
             .send();
     }
 }
 
 ACTION awmarketplace_smartcontract::matchnfts(name from, name to, asset quantity, std::string memo)
 {
+    if (memo.find("awnftmarket") != std::string::npos)
+    {
+        char delim = '#';
+        size_t start;
+        size_t end = 0;
+        vector<string> tmp;
+        while ((start = memo.find_first_not_of(delim, end)) !=
+               string::npos)
+        {
+            end = memo.find(delim, start);
+            tmp.push_back(memo.substr(start, end - start));
+        }
+        check(tmp.size() == 3, "memo not match partner");
+        uint64_t market_id = std::stoi(tmp.at(1));
+        market_t markets(get_self(), get_self().value);
+        auto market = markets.find(market_id);
+        buy_order_t buyorder(get_self(), market_id);
+        sell_order_t sellorder(get_self(), market_id);
+        // if match
+        auto bid_quantity = quantity;
+        eosio::asset sell_quantity_zero(0, eosio::symbol("TLM", 4));
+        auto match_sellorders = sellorder.range(
+            {sell_quantity_zero, ask},
+            {quantity, ask});
+        if (match_sellorders.size() > 0)
+        {
+            for (auto &order : match_sellorders)
+            {
+                // Tranfer nft đến người mua
+                action(permission_level{get_self(), name("active")}, ATOMICASSETS_ACCOUNT,
+                       name("transfer"),
+                       std::make_tuple(get_self(), from, order->bid, string("")))
+                    .send();
+                // trả tiền cho người bán
+                action(permission_level{get_self(), name("active")}, ALIEN_WORLDS,
+                       name("transfer"),
+                       std::make_tuple(get_self(), order->account, order->ask, string("match order")))
+                    .send();
+                bid_quantity -= order->ask;
+                // delete order success
+                sellorder.erase(order);
+            }
+
+            // Trả tiền dư
+            if (bid_quantity.amount > 0)
+            {
+                // Tranfer asset to order account
+                action(permission_level{get_self(), name("active")}, ALIEN_WORLDS,
+                       name("transfer"),
+                       std::make_tuple(get_self(), from, bid_quantity, string("refund")))
+                    .send();
+            }
+        }
+        else
+        {
+            // else match
+            uint16_t ask = std::stoi(tmp.at(2));
+            buy_order_s buy_receipt = {buyorder.available_primary_key(), from, ask, quantity, now()};
+            action(permission_level{get_self(), name("active")}, get_self(),
+                   name("buyreceipt"),
+                   std::make_tuple(market_id, buy_receipt))
+                .send();
+        }
+    }
 }
 
 ACTION awmarketplace_smartcontract::sellreceipt(uint64_t market_id, sell_order_s sell_order)
 {
-    // v.id = sellorder.available_primary_key();
     require_auth(get_self());
     sell_order_t sellorder(get_self(), market_id);
     sellorder.emplace(get_self(), [&](auto &v)
@@ -166,7 +226,6 @@ ACTION awmarketplace_smartcontract::sellreceipt(uint64_t market_id, sell_order_s
 
 ACTION awmarketplace_smartcontract::buyreceipt(uint64_t market_id, buy_order_s buy_order)
 {
-    require_auth(get_self());
     require_auth(get_self());
     buy_order_t buyorder(get_self(), market_id);
     buyorder.emplace(get_self(), [&](auto &v)

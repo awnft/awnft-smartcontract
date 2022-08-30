@@ -10,25 +10,28 @@ CONTRACT awmarketplace_smartcontract : public contract
 public:
    using contract::contract;
    static constexpr name ATOMICASSETS_ACCOUNT = name("atomicassets");
+   static constexpr name ALIEN_WORLDS = name("alien.worlds");
 
    struct sell_order_s
    {
       uint64_t id;
       name account;
       asset ask;
-      uint16_t bid;
+      vector<uint64_t> bid;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
+      uint64_t matches() const { return ask.amount; };
    };
 
    struct buy_order_s
    {
       uint64_t id;
       name account;
-      uint16_t ask;
+      uint8_t ask;
       asset bid;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
+      uint64_t matches() const { return bid.amount; };
    };
 
    struct nft_s
@@ -121,13 +124,13 @@ public:
    ACTION setmfrozen(uint64_t market_id, uint64_t frozen);
    ACTION setmfee(uint64_t market_id, uint8_t fee);
    [[eosio::on_notify("atomicassets::transfer")]] void matchassets(name from, name to, vector<uint64_t> asset_ids, std::string memo);
-   [[eosio::on_notify("eosio.token::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
+   [[eosio::on_notify("alien.worlds::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
 
 private:
    /*Table*/
-   using buy_order_t = multi_index<name("buyorder"), buy_order_s>;
+   using buy_order_t = multi_index<name("buyorder"), buy_order_s, indexed_by<name("bid"), const_mem_fun<buy_order_s, uint64_t, &buy_order_s::matches>>>;
 
-   using sell_order_t = multi_index<name("sellorder"), sell_order_s>;
+   using sell_order_t = multi_index<name("sellorder"), sell_order_s, indexed_by<name("ask"), const_mem_fun<sell_order_s, uint64_t, &sell_order_s::matches>>>;
 
    TABLE ban_t
    {
