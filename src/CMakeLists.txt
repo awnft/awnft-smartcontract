@@ -1,8 +1,8 @@
-project(awmarketplace_smartcontract)
+project(awmarket)
 
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")
 find_package(eosio.cdt)
 
-add_contract( awmarketplace_smartcontract awmarketplace_smartcontract awmarketplace_smartcontract.cpp )
-target_include_directories( awmarketplace_smartcontract PUBLIC ${CMAKE_SOURCE_DIR}/../include )
-target_ricardian_directory( awmarketplace_smartcontract ${CMAKE_SOURCE_DIR}/../ricardian )
+add_contract( awmarket awmarket awmarket.cpp )
+target_include_directories( awmarket PUBLIC ${CMAKE_SOURCE_DIR}/../include )
+target_ricardian_directory( awmarket ${CMAKE_SOURCE_DIR}/../ricardian )

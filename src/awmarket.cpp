@@ -1,12 +1,12 @@
-#include <awmarketplace_smartcontract.hpp>
+#include <awmarket.hpp>
 
-ACTION awmarketplace_smartcontract::sellmatch(s_match_record record)
+ACTION awmarket::sellmatch(smatch record)
 {
 }
-ACTION awmarketplace_smartcontract::buymatch(b_match_record record)
+ACTION awmarket::buymatch(bmatch record)
 {
 }
-ACTION awmarketplace_smartcontract::ban(vector<name> accounts) {}
+// ACTION awmarket::ban(vector<name> accounts) {}
 
 /**
  * @brief open market
@@ -20,10 +20,10 @@ ACTION awmarketplace_smartcontract::ban(vector<name> accounts) {}
  * @param fee
  * @return ACTION
  */
-ACTION awmarketplace_smartcontract::openmarket(name base_con, symbol base_sym, uint32_t quote_t_id, name quote_con, asset min_buy, uint16_t min_sell, uint8_t fee)
+ACTION awmarket::openmarket(name base_con, symbol base_sym, uint32_t quote_t_id, name quote_con, asset min_buy, uint16_t min_sell, uint8_t fee)
 {
-    require_auth(get_self());
-    market_t markets(get_self(), get_self().value);
+    require_auth(OWNER);
+    auto markets = market_s(get_self(), get_self().value);
     markets.emplace(get_self(), [&](auto &v)
                     { v.base_token.contract = base_con;
                     v.base_token.sym = base_sym;
@@ -42,10 +42,10 @@ ACTION awmarketplace_smartcontract::openmarket(name base_con, symbol base_sym, u
  * @param market_id
  * @return ACTION
  */
-ACTION awmarketplace_smartcontract::closemarket(uint64_t market_id)
+ACTION awmarket::closemarket(uint64_t market_id)
 {
-    require_auth(get_self());
-    market_t markets(get_self(), get_self().value);
+    require_auth(OWNER);
+    auto markets = market_s(get_self(), get_self().value);
     auto it = markets.find(market_id);
     if (it != markets.end())
     {
@@ -60,10 +60,10 @@ ACTION awmarketplace_smartcontract::closemarket(uint64_t market_id)
  * @param frozen
  * @return ACTION
  */
-ACTION awmarketplace_smartcontract::setmfrozen(uint64_t market_id, uint64_t frozen)
+ACTION awmarket::setmfrozen(uint64_t market_id, uint64_t frozen)
 {
     require_auth(get_self());
-    market_t markets(get_self(), get_self().value);
+    auto markets = market_s(get_self(), get_self().value);
     auto market = markets.find(market_id);
 
     if (market != markets.end())
@@ -80,10 +80,10 @@ ACTION awmarketplace_smartcontract::setmfrozen(uint64_t market_id, uint64_t froz
  * @param fee
  * @return ACTION
  */
-ACTION awmarketplace_smartcontract::setmfee(uint64_t market_id, uint8_t fee)
+ACTION awmarket::setmfee(uint64_t market_id, uint8_t fee)
 {
     require_auth(get_self());
-    market_t markets(get_self(), get_self().value);
+    auto markets = market_s(get_self(), get_self().value);
     auto market = markets.find(market_id);
 
     if (market != markets.end())
@@ -93,7 +93,7 @@ ACTION awmarketplace_smartcontract::setmfee(uint64_t market_id, uint8_t fee)
     }
 }
 
-ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint64_t> asset_ids, std::string memo)
+ACTION awmarket::matchassets(name from, name to, vector<uint64_t> asset_ids, std::string memo)
 {
     // check xem asset chuyển vào chợ có đúng không?
     if (memo.find("awnftmarket") != std::string::npos)
@@ -110,7 +110,7 @@ ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint6
         }
         check(tmp.size() == 3, "memo not match partner");
         uint64_t market_id = std::stoi(tmp.at(1));
-        market_t markets(get_self(), get_self().value);
+        auto markets = market_s(get_self(), get_self().value);
         auto market = markets.find(market_id);
         if (market != markets.end())
         {
@@ -129,9 +129,9 @@ ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint6
         // else match
         uint64_t ask_amount = std::stoi(tmp.at(2));
         eosio::asset sell_quantity(ask_amount, eosio::symbol("TLM", 4));
-        sell_order_t sellorder(get_self(), market_id);
-        sell_order_s sell_receipt = {
-            sellorder.available_primary_key(),
+        auto sellorders = sell_order_s(get_self(), market_id);
+        sellorder sell_receipt = {
+            sellorders.available_primary_key(),
             from,
             sell_quantity,
             asset_ids,
@@ -143,7 +143,7 @@ ACTION awmarketplace_smartcontract::matchassets(name from, name to, vector<uint6
     }
 }
 
-ACTION awmarketplace_smartcontract::matchnfts(name from, name to, asset quantity, std::string memo)
+ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
 {
     if (memo.find("awnftmarket") != std::string::npos)
     {
@@ -159,16 +159,28 @@ ACTION awmarketplace_smartcontract::matchnfts(name from, name to, asset quantity
         }
         check(tmp.size() == 3, "memo not match partner");
         uint64_t market_id = std::stoi(tmp.at(1));
-        market_t markets(get_self(), get_self().value);
+        auto markets = market_s(get_self(), get_self().value);
         auto market = markets.find(market_id);
-        buy_order_t buyorder(get_self(), market_id);
-        sell_order_t sellorder(get_self(), market_id);
+        auto buyorders = buy_order_s(get_self(), market_id);
+        auto sellorders = sell_order_s(get_self(), market_id);
         // if match
         auto bid_quantity = quantity;
-        eosio::asset sell_quantity_zero(0, eosio::symbol("TLM", 4));
-        auto match_sellorders = sellorder.range(
-            {sell_quantity_zero, ask},
-            {quantity, ask});
+        vector<sellorder> match_sellorders;
+        while (sellorders.begin() != sellorders.end())
+        {
+            auto sellorder_match = sellorders.begin();
+            if (sellorder_match->ask <= bid_quantity)
+            {
+                sellorder order = {sellorder_match->id, sellorder_match->account, sellorder_match->ask, sellorder_match->bid, sellorder_match->timestamp};
+                match_sellorders.push_back(order);
+                bid_quantity -= sellorder_match->ask;
+            }
+            else
+            {
+                break;
+            }
+        }
+
         if (match_sellorders.size() > 0)
         {
             for (auto &order : match_sellorders)
@@ -176,16 +188,17 @@ ACTION awmarketplace_smartcontract::matchnfts(name from, name to, asset quantity
                 // Tranfer nft đến người mua
                 action(permission_level{get_self(), name("active")}, ATOMICASSETS_ACCOUNT,
                        name("transfer"),
-                       std::make_tuple(get_self(), from, order->bid, string("")))
+                       std::make_tuple(get_self(), from, order.bid, string("")))
                     .send();
                 // trả tiền cho người bán
                 action(permission_level{get_self(), name("active")}, ALIEN_WORLDS,
                        name("transfer"),
-                       std::make_tuple(get_self(), order->account, order->ask, string("match order")))
+                       std::make_tuple(get_self(), order.account, order.ask, string("match order")))
                     .send();
-                bid_quantity -= order->ask;
+                bid_quantity -= order.ask;
                 // delete order success
-                sellorder.erase(order);
+                auto sell_matched = sellorders.find(order.id);
+                sellorders.erase(sell_matched);
             }
 
             // Trả tiền dư
@@ -201,8 +214,8 @@ ACTION awmarketplace_smartcontract::matchnfts(name from, name to, asset quantity
         else
         {
             // else match
-            uint16_t ask = std::stoi(tmp.at(2));
-            buy_order_s buy_receipt = {buyorder.available_primary_key(), from, ask, quantity, now()};
+            uint8_t ask = std::stoi(tmp.at(2));
+            buyorder buy_receipt = {buyorders.available_primary_key(), from, ask, quantity, now()};
             action(permission_level{get_self(), name("active")}, get_self(),
                    name("buyreceipt"),
                    std::make_tuple(market_id, buy_receipt))
@@ -211,28 +224,28 @@ ACTION awmarketplace_smartcontract::matchnfts(name from, name to, asset quantity
     }
 }
 
-ACTION awmarketplace_smartcontract::sellreceipt(uint64_t market_id, sell_order_s sell_order)
+ACTION awmarket::sellreceipt(uint64_t market_id, sellorder order)
 {
     require_auth(get_self());
-    sell_order_t sellorder(get_self(), market_id);
-    sellorder.emplace(get_self(), [&](auto &v)
-                      {
-        v.id = sell_order.id;
-        v.account = sell_order.account;
-        v.ask = sell_order.ask;
-        v.bid = sell_order.bid;
-        v.timestamp = sell_order.timestamp; });
+    auto sellorders = sell_order_s(get_self(), market_id);
+    sellorders.emplace(get_self(), [&](auto &v)
+                       {
+        v.id = order.id;
+        v.account = order.account;
+        v.ask = order.ask;
+        v.bid = order.bid;
+        v.timestamp = order.timestamp; });
 }
 
-ACTION awmarketplace_smartcontract::buyreceipt(uint64_t market_id, buy_order_s buy_order)
+ACTION awmarket::buyreceipt(uint64_t market_id, buyorder order)
 {
     require_auth(get_self());
-    buy_order_t buyorder(get_self(), market_id);
-    buyorder.emplace(get_self(), [&](auto &v)
-                     {
-        v.id = buy_order.id;
-        v.account = buy_order.account;
-        v.ask = buy_order.ask;
-        v.bid = buy_order.bid;
-        v.timestamp = buy_order.timestamp; });
+    auto buyorders = buy_order_s(get_self(), market_id);
+    buyorders.emplace(get_self(), [&](auto &v)
+                      {
+        v.id = order.id;
+        v.account = order.account;
+        v.ask = order.ask;
+        v.bid = order.bid;
+        v.timestamp = order.timestamp; });
 }
