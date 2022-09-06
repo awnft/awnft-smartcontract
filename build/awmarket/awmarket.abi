@@ -42,34 +42,8 @@
                     "type": "asset"
                 },
                 {
-                    "name": "market",
+                    "name": "mk",
                     "type": "market"
-                },
-                {
-                    "name": "timestamp",
-                    "type": "uint32"
-                }
-            ]
-        },
-        {
-            "name": "buy_order_t",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "account",
-                    "type": "name"
-                },
-                {
-                    "name": "ask",
-                    "type": "uint8"
-                },
-                {
-                    "name": "bid",
-                    "type": "asset"
                 },
                 {
                     "name": "timestamp",
@@ -154,50 +128,12 @@
                     "type": "quotenft"
                 },
                 {
-                    "name": "min_buy",
+                    "name": "min_sell",
                     "type": "asset"
                 },
                 {
-                    "name": "min_sell",
-                    "type": "uint16"
-                },
-                {
-                    "name": "fee",
+                    "name": "min_buy",
                     "type": "uint8"
-                },
-                {
-                    "name": "frozen",
-                    "type": "bool"
-                },
-                {
-                    "name": "timestamp",
-                    "type": "uint32"
-                }
-            ]
-        },
-        {
-            "name": "market_t",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "base_token",
-                    "type": "basetoken"
-                },
-                {
-                    "name": "quote_nft",
-                    "type": "quotenft"
-                },
-                {
-                    "name": "min_buy",
-                    "type": "asset"
-                },
-                {
-                    "name": "min_sell",
-                    "type": "uint16"
                 },
                 {
                     "name": "fee",
@@ -256,12 +192,12 @@
                     "type": "name"
                 },
                 {
-                    "name": "min_buy",
+                    "name": "min_sell",
                     "type": "asset"
                 },
                 {
-                    "name": "min_sell",
-                    "type": "uint16"
+                    "name": "min_buy",
+                    "type": "uint8"
                 },
                 {
                     "name": "fee",
@@ -310,32 +246,6 @@
                 {
                     "name": "contract",
                     "type": "name"
-                }
-            ]
-        },
-        {
-            "name": "sell_order_t",
-            "base": "",
-            "fields": [
-                {
-                    "name": "id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "account",
-                    "type": "name"
-                },
-                {
-                    "name": "ask",
-                    "type": "asset"
-                },
-                {
-                    "name": "bid",
-                    "type": "uint64[]"
-                },
-                {
-                    "name": "timestamp",
-                    "type": "uint32"
                 }
             ]
         },
@@ -438,7 +348,7 @@
                     "type": "uint16"
                 },
                 {
-                    "name": "market",
+                    "name": "mk",
                     "type": "market"
                 },
                 {
@@ -510,15 +420,15 @@
     ],
     "tables": [
         {
-            "name": "buyorder",
-            "type": "buy_order_t",
+            "name": "buyorders",
+            "type": "buyorder",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
         },
         {
             "name": "markets",
-            "type": "market_t",
+            "type": "market",
             "index_type": "i64",
             "key_names": [],
             "key_types": []
@@ -531,8 +441,8 @@
             "key_types": []
         },
         {
-            "name": "sellorder",
-            "type": "sell_order_t",
+            "name": "sellorders",
+            "type": "sellorder",
             "index_type": "i64",
             "key_names": [],
             "key_types": []

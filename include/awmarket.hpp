@@ -13,7 +13,7 @@ public:
    static constexpr name ALIEN_WORLDS = name("alien.worlds");
    static constexpr name OWNER = name("awnftmakette");
 
-   struct sellorder
+   struct [[eosio::table]] sellorder
    {
       uint64_t id;
       name account;
@@ -21,9 +21,13 @@ public:
       vector<uint64_t> bid;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
+      bool operator<(const sellorder &s) const
+      {
+         return (ask < s.ask);
+      }
    };
 
-   struct buyorder
+   struct [[eosio::table]] buyorder
    {
       uint64_t id;
       name account;
@@ -70,13 +74,13 @@ public:
     * @brief Struct market
     *
     */
-   struct market
+   struct [[eosio::table]] market
    {
       uint64_t id;
       basetoken base_token;
       quotenft quote_nft;
-      asset min_buy;
-      uint16_t min_sell;
+      asset min_sell;
+      uint8_t min_buy;
       uint8_t fee;
       bool frozen;
       uint32_t timestamp;
@@ -93,7 +97,7 @@ public:
       uint16_t ask;
       name bidder;
       asset bid;
-      market market;
+      market mk;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
    };
@@ -108,7 +112,7 @@ public:
       asset ask;
       name bidder;
       uint16_t bid;
-      market market;
+      market mk;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
    };
@@ -118,12 +122,12 @@ public:
    ACTION sellreceipt(uint64_t market_id, sellorder order);
    ACTION buyreceipt(uint64_t market_id, buyorder order);
    // ACTION ban(vector<name> accounts);
-   ACTION openmarket(name base_con, symbol base_sym, uint32_t quote_t_id, name quote_con, asset min_buy, uint16_t min_sell, uint8_t fee);
+   ACTION openmarket(name base_con, symbol base_sym, uint32_t quote_t_id, name quote_con, asset min_sell, uint8_t min_buy, uint8_t fee);
    ACTION closemarket(uint64_t market_id);
    ACTION setmfrozen(uint64_t market_id, uint64_t frozen);
    ACTION setmfee(uint64_t market_id, uint8_t fee);
    [[eosio::on_notify("atomicassets::transfer")]] void matchassets(name from, name to, vector<uint64_t> asset_ids, std::string memo);
-   [[eosio::on_notify("alien.worlds::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
+   [[eosio::on_notify("eosio.token::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
 
    uint32_t now()
    {
@@ -132,46 +136,11 @@ public:
 
 private:
    /*Table*/
-   TABLE sell_order_t
-   {
-      uint64_t id;
-      name account;
-      asset ask;
-      vector<uint64_t> bid;
-      uint32_t timestamp;
-      uint64_t primary_key() const { return id; };
-   };
-   typedef multi_index<name("sellorder"), sell_order_t> sell_order_s;
+   typedef multi_index<name("sellorders"), sellorder> sell_order_s;
 
-   TABLE buy_order_t
-   {
-      uint64_t id;
-      name account;
-      uint8_t ask;
-      asset bid;
-      uint32_t timestamp;
-      uint64_t primary_key() const { return id; };
-   };
-   typedef multi_index<name("buyorder"), buy_order_t> buy_order_s;
+   typedef multi_index<name("buyorders"), buyorder> buy_order_s;
 
-   // TABLE ban_t
-   // {
-   //    vector<name> accounts;
-   // };
-
-   TABLE market_t
-   {
-      uint64_t id;
-      basetoken base_token;
-      quotenft quote_nft;
-      asset min_buy;
-      uint16_t min_sell;
-      uint8_t fee;
-      bool frozen;
-      uint32_t timestamp;
-      uint64_t primary_key() const { return id; };
-   };
-   typedef multi_index<name("markets"), market_t> market_s;
+   typedef multi_index<name("markets"), market> market_s;
 
    TABLE pair_t
    {
