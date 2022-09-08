@@ -15,6 +15,7 @@
         "thread": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "cmath": "cpp"
     }
 }

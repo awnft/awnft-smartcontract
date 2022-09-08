@@ -1,6 +1,7 @@
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
 #include <eosio/system.hpp>
+#include <math.h>
 
 using namespace eosio;
 using namespace std;
@@ -21,9 +22,9 @@ public:
       vector<uint64_t> bid;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
-      bool operator<(const sellorder &s) const
+      uint64_t askorder() const
       {
-         return (ask < s.ask);
+         return ask.symbol.code().raw();
       }
    };
 
@@ -35,6 +36,10 @@ public:
       asset bid;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
+      uint64_t bidorder() const
+      {
+         return bid.symbol.code().raw();
+      }
    };
 
    struct nft
@@ -94,9 +99,10 @@ public:
    struct bmatch
    {
       uint64_t id;
-      uint16_t ask;
-      name bidder;
+      vector<uint64_t> ask;
+      name asker;
       asset bid;
+      name bidder;
       market mk;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
@@ -110,8 +116,9 @@ public:
    {
       uint64_t id;
       asset ask;
+      name asker;
+      vector<uint64_t> bid;
       name bidder;
-      uint16_t bid;
       market mk;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
@@ -136,9 +143,9 @@ public:
 
 private:
    /*Table*/
-   typedef multi_index<name("sellorders"), sellorder> sell_order_s;
+   typedef multi_index<name("sellorders"), sellorder, indexed_by<name("askorder"), const_mem_fun<sellorder, uint64_t, &sellorder::askorder>>> sell_order_s;
 
-   typedef multi_index<name("buyorders"), buyorder> buy_order_s;
+   typedef multi_index<name("buyorders"), buyorder, indexed_by<name("bidorder"), const_mem_fun<buyorder, uint64_t, &buyorder::bidorder>>> buy_order_s;
 
    typedef multi_index<name("markets"), market> market_s;
 

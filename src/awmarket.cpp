@@ -2,9 +2,32 @@
 
 ACTION awmarket::sellmatch(smatch record)
 {
+    require_auth(get_self());
+    // Tranfer nft đến người mua
+    action(permission_level{get_self(), name("active")}, record.mk.quote_nft.contract,
+           name("transfer"),
+           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.exchange")))
+        .send();
+    // trả tiền cho người bán
+    action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
+           name("transfer"),
+           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.exchange")))
+        .send();
 }
+
 ACTION awmarket::buymatch(bmatch record)
 {
+    require_auth(get_self());
+    // Tranfer nft đến người mua
+    action(permission_level{get_self(), name("active")}, record.mk.quote_nft.contract,
+           name("transfer"),
+           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.exchange")))
+        .send();
+    // trả tiền cho người bán
+    action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
+           name("transfer"),
+           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.exchange")))
+        .send();
 }
 // ACTION awmarket::ban(vector<name> accounts) {}
 
@@ -108,7 +131,7 @@ ACTION awmarket::matchassets(name from, name to, vector<uint64_t> asset_ids, std
             end = memo.find(delim, start);
             tmp.push_back(memo.substr(start, end - start));
         }
-        check(tmp.size() == 3, "memo not match partner");
+        check(tmp.size() == 3, "memo not match pattern");
         uint64_t market_id = std::stoi(tmp.at(1));
         auto markets = market_s(get_self(), get_self().value);
         auto market = markets.find(market_id);
@@ -122,24 +145,53 @@ ACTION awmarket::matchassets(name from, name to, vector<uint64_t> asset_ids, std
                 check(market->quote_nft.template_id == guest_asset->template_id, "template_id not match market");
             }
         }
+        // get buyorder
+        auto buyorders = buy_order_s(get_self(), market_id);
 
-        // check match asset
-        //  if match
-
-        // else match
         uint64_t ask_amount = std::stoi(tmp.at(2));
-        eosio::asset sell_quantity(ask_amount, eosio::symbol("TLM", 4));
-        auto sellorders = sell_order_s(get_self(), market_id);
-        sellorder sell_receipt = {
-            sellorders.available_primary_key(),
-            from,
-            sell_quantity,
-            asset_ids,
-            now()};
-        action(permission_level{get_self(), name("active")}, get_self(),
-               name("sellreceipt"),
-               std::make_tuple(market_id, sell_receipt))
-            .send();
+        eosio::asset sell_quantity(ask_amount, market->base_token.sym);
+        auto askquantity = sell_quantity;
+        // check match asset
+        // Check order mask
+        auto bidorder = buyorders.get_index<name("bidorder")>();
+        uint8_t asksize = asset_ids.size();
+        for (auto &order : bidorder)
+        {
+            if (asksize >= order.bid)
+            {
+                // log buymatch
+                smatch match_ = {order.id, order.bid, from, order.ask, order.account, bmarket, now()};
+                action(permission_level{get_self(), name("active")}, get_self(),
+                       name("buymatch"),
+                       std::make_tuple(match_))
+                    .send();
+                // delete order success
+                buyorders.erase(order);
+                bid_quantity -= order.ask;
+            }
+            else
+            {
+            }
+        }
+        //  if match
+        if (asset_ids.size() > 0)
+        {
+            /* code */
+        }
+        else
+        {
+            auto sellorders = sell_order_s(get_self(), market_id);
+            sellorder sell_receipt = {
+                sellorders.available_primary_key(),
+                from,
+                sell_quantity,
+                asset_ids,
+                now()};
+            action(permission_level{get_self(), name("active")}, get_self(),
+                   name("sellreceipt"),
+                   std::make_tuple(market_id, sell_receipt))
+                .send();
+        }
     }
 }
 
@@ -157,7 +209,7 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
             end = memo.find(delim, start);
             tmp.push_back(memo.substr(start, end - start));
         }
-        check(tmp.size() == 3, "memo not match partner");
+        check(tmp.size() == 3, "memo not match pattern");
         // get market id
         uint64_t market_id = std::stoi(tmp.at(1));
         // find market
@@ -172,17 +224,75 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
         // get sellorder
         auto sellorders = sell_order_s(get_self(), market_id);
 
-        // if match
-        vector<sellorder> match_sellorders;
-        if (sellorders.begin() != sellorders.end())
+        // Check order mask
+        auto askorder = sellorders.get_index<name("askorder")>();
+        auto bid_quantity = quantity;
+        market bmarket = {market_->id, market_->base_token, market_->quote_nft, market_->min_sell, market_->min_buy, market_->fee, market_->frozen, market_->timestamp};
+        for (auto &order : askorder)
         {
-            while (sellorders.begin() != sellorders.end())
+            if (bid_quantity >= order.ask)
             {
-                auto sellorder_match = sellorders.begin();
-                if (sellorder_match->ask <= quantity)
+                // log buymatch
+                bmatch match_ = {order.id, order.bid, from, order.ask, order.account, bmarket, now()};
+                action(permission_level{get_self(), name("active")}, get_self(),
+                       name("sellmatch"),
+                       std::make_tuple(match_))
+                    .send();
+                // delete order success
+                sellorders.erase(order);
+                bid_quantity -= order.ask;
+            }
+            else
+            {
+                // Case này vào trường hợp bid còn 1 => break match
+                if (order.bid.size() == 1)
                 {
-                    sellorder order = {sellorder_match->id, sellorder_match->account, sellorder_match->ask, sellorder_match->bid, sellorder_match->timestamp};
-                    match_sellorders.push_back(order);
+                    break;
+                }
+                // Trường hợp có nfts với giá phù hợp trong lô => tách lô ra nft lẻ để match
+                uint8_t bidsize = order.bid.size();
+                uint8_t sizeremaning = ceil(bid_quantity.amount / (order.ask.amount / bidsize));
+                if (sizeremaning > 0)
+                {
+                    vector<uint64_t> bidorder;
+                    vector<uint64_t> bidremaning;
+                    uint8_t i = 0;
+                    for (auto &b : order.bid)
+                    {
+                        if (i < sizeremaning)
+                        {
+                            bidorder.push_back(b);
+                        }
+                        else
+                        {
+                            bidremaning.push_back(b);
+                        }
+                        i++;
+                    }
+
+                    if (bidorder.size() > 0)
+                    {
+                        eosio::asset ask_order(sizeremaning * (order.ask.amount / bidsize), market_->base_token.sym);
+                        bmatch match_ = {order.id, bidorder, from, ask_order, order.account, bmarket, now()};
+                        action(permission_level{get_self(), name("active")}, get_self(),
+                               name("sellmatch"),
+                               std::make_tuple(match_))
+                            .send();
+                        // Xóa order cũ, Thêm lại bản ghi mới sau khi đã match.
+                        bid_quantity -= ask_order;
+                        sellorders.erase(order);
+                        sellorders.emplace(get_self(), [&](auto &v)
+                                           {
+                                            v.id = order.id;
+                                            v.account = order.account;
+                                            v.ask = order.ask - ask_order;
+                                            v.bid = bidremaning;
+                                            v.timestamp = order.timestamp; });
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
                 else
                 {
@@ -191,52 +301,16 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
             }
         }
 
-        if (match_sellorders.size() > 0)
+        // if match
+        if (quantity != bid_quantity)
         {
-            auto bid_quantity = quantity;
-            std::sort(match_sellorders.begin(), match_sellorders.end());
-
-            for (auto &order : match_sellorders)
-            {
-                if (bid_quantity >= order.ask)
-                {
-                    // Tranfer nft đến người mua
-                    action(permission_level{get_self(), name("active")}, market_->quote_nft.contract,
-                           name("transfer"),
-                           std::make_tuple(get_self(), from, order.bid, string("")))
-                        .send();
-                    // trả tiền cho người bán
-                    action(permission_level{get_self(), name("active")}, market_->base_token.contract,
-                           name("transfer"),
-                           std::make_tuple(get_self(), order.account, order.ask, string("match order")))
-                        .send();
-                    // delete order success
-                    auto sell_matched = sellorders.find(order.id);
-                    sellorders.erase(sell_matched);
-                    bid_quantity -= order.ask;
-
-                    // log buymatch
-                    uint16_t b_ask_size = order.bid.size();
-                    market bmarket = {market_->id, market_->base_token, market_->quote_nft, market_->min_sell, market_->min_buy, market_->fee, market_->frozen, market_->timestamp};
-                    bmatch match_ = {order.id, b_ask_size, order.account, order.ask, bmarket, now()};
-                    action(permission_level{get_self(), name("active")}, get_self(),
-                           name("sellmatch"),
-                           std::make_tuple(match_))
-                        .send();
-                }
-                else
-                {
-                    break;
-                }
-            }
-
             // Trả tiền dư
             if (bid_quantity.amount > 0)
             {
                 // Tranfer asset to order account
                 action(permission_level{get_self(), name("active")}, market_->base_token.contract,
                        name("transfer"),
-                       std::make_tuple(get_self(), from, bid_quantity, string("refund")))
+                       std::make_tuple(get_self(), from, bid_quantity, string("Refund | DEX | athenaic.exchange")))
                     .send();
             }
         }

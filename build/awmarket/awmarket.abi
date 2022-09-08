@@ -31,15 +31,19 @@
                 },
                 {
                     "name": "ask",
-                    "type": "uint16"
+                    "type": "uint64[]"
                 },
                 {
-                    "name": "bidder",
+                    "name": "asker",
                     "type": "name"
                 },
                 {
                     "name": "bid",
                     "type": "asset"
+                },
+                {
+                    "name": "bidder",
+                    "type": "name"
                 },
                 {
                     "name": "mk",
@@ -340,12 +344,16 @@
                     "type": "asset"
                 },
                 {
-                    "name": "bidder",
+                    "name": "asker",
                     "type": "name"
                 },
                 {
                     "name": "bid",
-                    "type": "uint16"
+                    "type": "uint64[]"
+                },
+                {
+                    "name": "bidder",
+                    "type": "name"
                 },
                 {
                     "name": "mk",

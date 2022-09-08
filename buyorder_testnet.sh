@@ -1,5 +1,5 @@
-cleos wallet open -n atgatekeeper &&
-cleos wallet unlock -n atgatekeeper --password PW5KUS9ENT3aTTBHBFUUNJZWfoFBYvnrZWD6Y9KRnmhF8jNRE3ndB
+cleos wallet open -n awautoprotes &&
+cleos wallet unlock -n awautoprotes --password PW5K5JvVmsL18BrwUbTqgvLgCAaBWXid1m28V8XiN1oLXPUYxpeyC
 # cleos wallet open -n awautoprotes &&
 # cleos wallet unlock -n awautoprotes --password PW5K5JvVmsL18BrwUbTqgvLgCAaBWXid1m28V8XiN1oLXPUYxpeyC
 cleos -u https://testnet.wax.pink.gg push transaction '{
@@ -10,14 +10,14 @@ cleos -u https://testnet.wax.pink.gg push transaction '{
       "account": "eosio.token",
       "name": "transfer",
       "data": {
-        "from": "atgatekeeper",
+        "from": "awautoprotes",
         "to": "awnftmakette",
-        "quantity": "5.00000000 WAX",
-        "memo": "awnftmarket#0#1"
+        "quantity": "20.00000000 WAX",
+        "memo": "awnftmarket#0#10"
       },
       "authorization": [
         {
-          "actor": "atgatekeeper",
+          "actor": "awautoprotes",
           "permission": "owner"
         }
       ]
