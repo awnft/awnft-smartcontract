@@ -106,6 +106,42 @@
             ]
         },
         {
+            "name": "cancelbuy",
+            "base": "",
+            "fields": [
+                {
+                    "name": "executor",
+                    "type": "name"
+                },
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "order_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "cancelsell",
+            "base": "",
+            "fields": [
+                {
+                    "name": "executor",
+                    "type": "name"
+                },
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "order_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "closemarket",
             "base": "",
             "fields": [
@@ -393,6 +429,16 @@
         {
             "name": "buyreceipt",
             "type": "buyreceipt",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "cancelbuy",
+            "type": "cancelbuy",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "cancelsell",
+            "type": "cancelsell",
             "ricardian_contract": ""
         },
         {

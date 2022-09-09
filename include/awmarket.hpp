@@ -12,7 +12,7 @@ public:
    using contract::contract;
    static constexpr name ATOMICASSETS_ACCOUNT = name("atomicassets");
    static constexpr name ALIEN_WORLDS = name("alien.worlds");
-   static constexpr name OWNER = name("awnftmakette");
+   static constexpr name OWNER = name("awmarketmain");
 
    struct [[eosio::table]] sellorder
    {
@@ -123,7 +123,8 @@ public:
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
    };
-
+   ACTION cancelbuy(name executor, uint64_t market_id, uint64_t order_id);
+   ACTION cancelsell(name executor, uint64_t market_id, uint64_t order_id);
    ACTION buymatch(bmatch record);
    ACTION sellmatch(smatch record);
    ACTION sellreceipt(uint64_t market_id, sellorder order);
@@ -134,7 +135,7 @@ public:
    ACTION setmfrozen(uint64_t market_id, uint64_t frozen);
    ACTION setmfee(uint64_t market_id, uint8_t fee);
    [[eosio::on_notify("atomicassets::transfer")]] void matchassets(name from, name to, vector<uint64_t> asset_ids, std::string memo);
-   [[eosio::on_notify("eosio.token::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
+   [[eosio::on_notify("alien.worlds::transfer")]] void matchnfts(name from, name to, asset quantity, std::string memo);
 
    uint32_t now()
    {

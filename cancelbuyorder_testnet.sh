@@ -7,13 +7,12 @@ cleos -u https://testnet.wax.pink.gg push transaction '{
   "max_cpu_usage_ms": 0,
   "actions": [
     {
-      "account": "eosio.token",
-      "name": "transfer",
+      "account": "awnftmakette",
+      "name": "cancelbuy",
       "data": {
-        "from": "awautoprotes",
-        "to": "awnftmakette",
-        "quantity": "10.00000000 WAX",
-        "memo": "awnftmarket#0#6"
+        "executor": "awautoprotes",
+        "market_id": 0,
+        "order_id": 3
       },
       "authorization": [
         {

@@ -1,10 +1,7 @@
-# cleos wallet open -n autoproloans &&
-# cleos wallet unlock -n autoproloans --password PW5JtUvcsHXAPA7inBcYVFLwLHnH73d2SVKbqzMgsoPWvAUC8g4z8
-# cleos wallet open -n awgatekeeper &&
-# cleos wallet unlock -n awgatekeeper --password PW5JVKGBBTmTghokrHkt1D1Ay8R3zBNRtrsDz4EJTrAAu5XUd5BsX
-cleos wallet open -n awnftmakette &&
-cleos wallet unlock -n awnftmakette --password PW5KRBc1eqeFSBbUNGzjYLNbx1W8Ag189kAz1nWzvm8FDDdDnshoE &&
-cleos -u https://testnet.waxsweden.org push transaction '{
+cleos wallet open -n awmarketmain &&
+# cleos wallet unlock -n awmarketmain --password PW5KGTzZg91s9eGUdsYCaNajJtrZUGrqH51yyijMnnQZqh6DfXomo &&
+cleos wallet unlock -n awmarketmain --password PW5KFmeioziq7bWEaJ8z651Hu1333hW9tPJwDzuHAnKHKqyKgKLwR &&
+cleos -u https://wax.greymass.com push transaction '{
   "delay_sec": 0,
   "max_cpu_usage_ms": 0,
   "actions": [
@@ -12,21 +9,21 @@ cleos -u https://testnet.waxsweden.org push transaction '{
       "account": "eosio",
       "name": "updateauth",
       "data": {
-        "account": "awnftmakette",
+        "account": "awmarketmain",
         "permission": "active",
         "parent": "owner",
         "auth": {
           "threshold": 1,
           "keys": [
             {
-              "key": "PUB_K1_6btvA4xTLuT6FRmzY6gmQ3MpPFMqGGNXXpE8zE9GYeWq4xFGm7",
+              "key": "PUB_K1_5vY8UdAaYDjWScGY7rLKnMBHH5PfBfY2cHZZG7UYRyuf5reBNJ",
               "weight": 1
             }
           ],
           "accounts": [
             {
               "permission": {
-                "actor": "awnftmakette",
+                "actor": "awmarketmain",
                 "permission": "eosio.code"
               },
               "weight": 1
@@ -37,7 +34,7 @@ cleos -u https://testnet.waxsweden.org push transaction '{
       },
       "authorization": [
         {
-          "actor": "awnftmakette",
+          "actor": "awmarketmain",
           "permission": "owner"
         }
       ]
