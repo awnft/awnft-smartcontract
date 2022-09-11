@@ -284,16 +284,19 @@ ACTION awmarket::matchassets(name from, name to, vector<uint64_t> asset_ids, std
             }
             else
             {
-                sellorder sell_receipt = {
-                    sellorders.available_primary_key(),
-                    from,
-                    quantity_remaining,
-                    asset_remaining,
-                    now()};
-                action(permission_level{get_self(), name("active")}, get_self(),
-                       name("sellreceipt"),
-                       std::make_tuple(market_id, sell_receipt))
-                    .send();
+                if (asset_remaining.size() > 0)
+                {
+                    sellorder sell_receipt = {
+                        sellorders.available_primary_key(),
+                        from,
+                        quantity_remaining,
+                        asset_remaining,
+                        now()};
+                    action(permission_level{get_self(), name("active")}, get_self(),
+                           name("sellreceipt"),
+                           std::make_tuple(market_id, sell_receipt))
+                        .send();
+                }
             }
         }
     }
@@ -441,17 +444,20 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
             }
             else
             {
-                // Còn thì cho vào biên nhận để match lần sau
-                buyorder buy_receipt = {
-                    buyorders.available_primary_key(),
-                    from,
-                    buy_ask,
-                    bid_quantity,
-                    now()};
-                action(permission_level{get_self(), name("active")}, get_self(),
-                       name("buyreceipt"),
-                       std::make_tuple(market_id, buy_receipt))
-                    .send();
+                if (buy_ask != 0)
+                {
+                    // Còn thì cho vào biên nhận để match lần sau
+                    buyorder buy_receipt = {
+                        buyorders.available_primary_key(),
+                        from,
+                        buy_ask,
+                        bid_quantity,
+                        now()};
+                    action(permission_level{get_self(), name("active")}, get_self(),
+                           name("buyreceipt"),
+                           std::make_tuple(market_id, buy_receipt))
+                        .send();
+                }
             }
         }
         else
@@ -528,4 +534,21 @@ ACTION awmarket::cancelsell(name executor, uint64_t market_id, uint64_t order_id
            std::make_tuple(get_self(), cancelorder->account, cancelorder->bid, string("cancel order | DEX | athenaic.exchange")))
         .send();
     sellorders.erase(cancelorder);
+}
+
+ACTION awmarket::removeorder(uint64_t market_id)
+{
+    require_auth(get_self());
+    auto sellorders = sell_order_s(get_self(), market_id);
+    auto buyorders = buy_order_s(get_self(), market_id);
+    auto sellorder = sellorders.begin();
+    while (sellorder != sellorders.end())
+    {
+        sellorder = sellorders.erase(sellorder);
+    }
+    auto buyorder = buyorders.begin();
+    while (buyorder != buyorders.end())
+    {
+        buyorder = buyorders.erase(buyorder);
+    }
 }

@@ -290,6 +290,16 @@
             ]
         },
         {
+            "name": "removeorder",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
             "name": "sellmatch",
             "base": "",
             "fields": [
@@ -449,6 +459,11 @@
         {
             "name": "openmarket",
             "type": "openmarket",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "removeorder",
+            "type": "removeorder",
             "ricardian_contract": ""
         },
         {

@@ -16,6 +16,7 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "tuple": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "*.tcc": "cpp"
     }
 }

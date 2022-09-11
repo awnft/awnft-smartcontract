@@ -24,7 +24,7 @@ public:
       uint64_t primary_key() const { return id; };
       uint64_t askorder() const
       {
-         return ask.symbol.code().raw();
+         return ask.amount;
       }
    };
 
@@ -38,7 +38,7 @@ public:
       uint64_t primary_key() const { return id; };
       uint64_t bidorder() const
       {
-         return bid.symbol.code().raw();
+         return bid.amount;
       }
    };
 
@@ -125,6 +125,7 @@ public:
    };
    ACTION cancelbuy(name executor, uint64_t market_id, uint64_t order_id);
    ACTION cancelsell(name executor, uint64_t market_id, uint64_t order_id);
+   ACTION removeorder(uint64_t market_id);
    ACTION buymatch(bmatch record);
    ACTION sellmatch(smatch record);
    ACTION sellreceipt(uint64_t market_id, sellorder order);
