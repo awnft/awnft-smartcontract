@@ -24,7 +24,7 @@ public:
       uint64_t primary_key() const { return id; };
       uint64_t askorder() const
       {
-         return ask.amount;
+         return ask.amount / bid.size();
       }
    };
 
@@ -38,7 +38,7 @@ public:
       uint64_t primary_key() const { return id; };
       uint64_t bidorder() const
       {
-         return bid.amount;
+         return bid.amount / ask;
       }
    };
 

@@ -17,6 +17,12 @@
         "typeinfo": "cpp",
         "tuple": "cpp",
         "cmath": "cpp",
-        "*.tcc": "cpp"
+        "*.tcc": "cpp",
+        "cstdarg": "cpp",
+        "cstdio": "cpp",
+        "cstdlib": "cpp",
+        "type_traits": "cpp",
+        "limits": "cpp",
+        "cstdint": "cpp"
     }
 }
