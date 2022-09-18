@@ -20,11 +20,12 @@ public:
       name account;
       asset ask;
       vector<uint64_t> bid;
+      uint64_t unit_price;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
       uint64_t askorder() const
       {
-         return ask.amount / bid.size();
+         return unit_price;
       }
    };
 
@@ -34,11 +35,12 @@ public:
       name account;
       uint8_t ask;
       asset bid;
+      uint64_t unit_price;
       uint32_t timestamp;
       uint64_t primary_key() const { return id; };
       uint64_t bidorder() const
       {
-         return bid.amount / ask;
+         return unit_price;
       }
    };
 
@@ -125,7 +127,9 @@ public:
    };
    ACTION cancelbuy(name executor, uint64_t market_id, uint64_t order_id);
    ACTION cancelsell(name executor, uint64_t market_id, uint64_t order_id);
-   ACTION removeorder(uint64_t market_id);
+   ACTION removemarket(uint64_t market_id);
+   ACTION removesorder(uint64_t market_id, uint64_t order_id);
+   ACTION removeborder(uint64_t market_id, uint64_t order_id);
    ACTION buymatch(bmatch record);
    ACTION sellmatch(smatch record);
    ACTION sellreceipt(uint64_t market_id, sellorder order);
@@ -142,6 +146,9 @@ public:
    {
       return (uint32_t)(eosio::current_time_point().sec_since_epoch());
    }
+
+   void matchbtransfer(bmatch record);
+   void matchstransfer(smatch record);
 
 private:
    /*Table*/

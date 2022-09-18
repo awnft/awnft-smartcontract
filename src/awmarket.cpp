@@ -3,32 +3,41 @@
 ACTION awmarket::sellmatch(smatch record)
 {
     require_auth(get_self());
-    // Tranfer nft đến người bán
-    action(permission_level{get_self(), name("active")}, record.mk.quote_nft.contract,
-           name("transfer"),
-           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.exchange")))
-        .send();
-    // trả tiền cho người mua
-    action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
-           name("transfer"),
-           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.exchange")))
-        .send();
 }
 
 ACTION awmarket::buymatch(bmatch record)
 {
     require_auth(get_self());
+}
+
+void awmarket::matchbtransfer(bmatch record)
+{
     // Tranfer nft đến người mua
     action(permission_level{get_self(), name("active")}, record.mk.quote_nft.contract,
            name("transfer"),
-           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.exchange")))
+           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.io")))
         .send();
     // trả tiền cho người bán
     action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
            name("transfer"),
-           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.exchange")))
+           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.io")))
         .send();
 }
+
+void awmarket::matchstransfer(smatch record)
+{
+    // Tranfer nft đến người bán
+    action(permission_level{get_self(), name("active")}, record.mk.quote_nft.contract,
+           name("transfer"),
+           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.io")))
+        .send();
+    // trả tiền cho người mua
+    action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
+           name("transfer"),
+           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.io")))
+        .send();
+}
+
 // ACTION awmarket::ban(vector<name> accounts) {}
 
 /**
@@ -162,130 +171,127 @@ ACTION awmarket::matchassets(name from, name to, vector<uint64_t> asset_ids, std
         market smarket = {market_->id, market_->base_token, market_->quote_nft, market_->min_sell, market_->min_buy, market_->fee, market_->frozen, market_->timestamp};
         asset quantity_remaining;
         auto sellprice = sell_quantity / asksize;
-        for (auto &order : bidorder)
+        vector<uint64_t> delid;
+        for (auto order = bidorder.rbegin(); order != bidorder.rend(); order++)
         {
-            // Nếu người mua yêu cầu số lượng bằng mà ít tiền hơn thì té luôn
-            if (asksize == order.ask && order.bid < sell_quantity)
+            if (sellprice.amount > order->unit_price)
             {
                 break;
             }
 
-            // match correct 100%
-            if (asksize == order.ask && order.bid == sell_quantity)
+            if (asksize == 0)
+            {
+                break;
+            }
+
+            // Check số lượng nft hiện tại bán ít hơn hoặc bằng số của ô mua thì khớp 100% lệnh này => cập nhật lại số còn lại cho ô mua
+            if (asksize <= order->ask)
             {
                 // log sellmatch
-                smatch match_ = {order.id, sell_quantity, from, asset_ids, order.account, smarket, now()};
+                smatch match_ = {order->id, sell_quantity, from, asset_ids, order->account, smarket, now()};
                 action(permission_level{get_self(), name("active")}, get_self(),
                        name("sellmatch"),
                        std::make_tuple(match_))
                     .send();
-                // delete order success
-                buyorders.erase(order);
-                asksize = 0;
-                break;
-            }
-            else
-            {
-                // Case không map
-                // Tính số lượng nft bán với số tiền yêu cấu => ra số lượng 1 nft bán
-                if (sellprice <= (order.bid / order.ask))
+
+                matchstransfer(match_);
+                if (asksize < order->ask)
                 {
-                    // Check số lượng nft hiện tại bán ít hơn hoặc bằng số của ô mua thì khớp 100% lệnh này => cập nhật lại số còn lại cho ô mua
-                    if (asksize <= order.ask)
-                    {
-                        if (asksize < order.ask)
-                        {
-                            // log sellmatch
-                            smatch match_ = {order.id, sell_quantity, from, asset_ids, order.account, smarket, now()};
-                            action(permission_level{get_self(), name("active")}, get_self(),
-                                   name("sellmatch"),
-                                   std::make_tuple(match_))
-                                .send();
-
-                            // Cập nhật lại số lượng cho ô mua
-                            //  update lại
-                            buyorders.modify(order, get_self(), [&](auto &v)
-                                             {
-                                            v.ask = order.ask - asksize;
-                                            v.bid = order.bid - sell_quantity; });
-
-                            asksize = 0;
-                        }
-                        else
-                        {
-                            // nếu sell với buy bằng thì xóa buyorder đi
-                            if (order.bid.amount - sell_quantity.amount > 0)
-                            {
-                                // Trả tiền dư cho người mua nft
-                                action(permission_level{get_self(), name("active")}, smarket.base_token.contract,
-                                       name("transfer"),
-                                       std::make_tuple(get_self(), order.account, order.bid - sell_quantity, string("refund | DEX | athenaic.exchange")))
-                                    .send();
-                            }
-                            // delete order success
-                            buyorders.erase(order);
-                            asksize = 0;
-                        }
-                        break;
-                    }
-                    else
-                    {
-                        // số nft hiện tại lớn hơn buyorder => cập nhật lại số dư, đồng thời xóa buyorder
-                        auto i = 0;
-                        vector<uint64_t> a_ids;
-                        for (auto &a_id : asset_ids)
-                        {
-                            if (i < order.ask)
-                            {
-                                a_ids.push_back(a_id);
-                                asset_ids.erase(asset_ids.begin() + i);
-                            }
-                            else
-                            {
-                                break;
-                            }
-                            i++;
-                        }
-
-                        // log sellmatch
-                        auto bid_quantity = sellprice * order.ask;
-                        smatch match_ = {order.id, bid_quantity, from, a_ids, order.account, smarket, now()};
-                        action(permission_level{get_self(), name("active")}, get_self(),
-                               name("sellmatch"),
-                               std::make_tuple(match_))
-                            .send();
-
-                        // Xử lý lệnh buy orer; trả tiền dư nếu có và xóa buyorder
-                        if (order.bid.amount - bid_quantity.amount > 0)
-                        {
-                            // Trả tiền dư cho người mua nft
-                            action(permission_level{get_self(), name("active")}, smarket.base_token.contract,
-                                   name("transfer"),
-                                   std::make_tuple(get_self(), order.account, order.bid - bid_quantity, string("refund | DEX | athenaic.exchange")))
-                                .send();
-                        }
-                        // delete order success
-                        buyorders.erase(order);
-
-                        // Cập nhật số lượng ask
-                        asksize -= order.ask;
-                    }
+                    // Cập nhật lại số lượng cho ô mua
+                    //  update lại
+                    auto bidremaining = order->bid - sell_quantity;
+                    auto sizeremaning = order->ask - asksize;
+                    auto bidremaining_price = bidremaining / sizeremaning;
+                    uint64_t bidremaining_amount = bidremaining_price.amount;
+                    auto itr = buyorders.find(order->id);
+                    check(itr != buyorders.end(), "order does not exist in table");
+                    buyorders.modify(itr, get_self(), [&](auto &v)
+                                     {
+                                            v.ask = sizeremaning;
+                                            v.bid = bidremaining;
+                                            v.unit_price = bidremaining_amount; });
                 }
                 else
                 {
-                    // Không có lệnh buy khớp
-                    break;
+                    // nếu sell với buy bằng thì xóa buyorder đi
+                    if (order->bid.amount - sell_quantity.amount > 0)
+                    {
+                        // Trả tiền dư cho người mua nft
+                        action(permission_level{get_self(), name("active")}, smarket.base_token.contract,
+                               name("transfer"),
+                               std::make_tuple(get_self(), order->account, order->bid - sell_quantity, string("refund | DEX | athenaic.io")))
+                            .send();
+                    }
+                    delid.push_back(order->id);
                 }
+                asksize = 0;
+            }
+            else
+            {
+                // số nft hiện tại lớn hơn buyorder => cập nhật lại số dư, đồng thời xóa buyorder
+                auto i = 0;
+                vector<uint64_t> a_ids;
+                for (auto &a_id : asset_ids)
+                {
+                    if (i < order->ask)
+                    {
+                        a_ids.push_back(a_id);
+                        asset_ids.erase(asset_ids.begin() + i);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    i++;
+                }
+
+                // log sellmatch
+                auto bid_quantity = sellprice * order->ask;
+                smatch match_ = {order->id, bid_quantity, from, a_ids, order->account, smarket, now()};
+                action(permission_level{get_self(), name("active")}, get_self(),
+                       name("sellmatch"),
+                       std::make_tuple(match_))
+                    .send();
+
+                matchstransfer(match_);
+
+                // Xử lý lệnh buy orer; trả tiền dư nếu có và xóa buyorder
+                if (order->bid.amount - bid_quantity.amount > 0)
+                {
+                    // Trả tiền dư cho người mua nft
+                    action(permission_level{get_self(), name("active")}, smarket.base_token.contract,
+                           name("transfer"),
+                           std::make_tuple(get_self(), order->account, order->bid - bid_quantity, string("refund | DEX | athenaic.io")))
+                        .send();
+                }
+                // Cập nhật số lượng ask
+                asksize -= order->ask;
+                delid.push_back(order->id);
             }
         }
+
+        // delete buy order
+        if (delid.size() > 0)
+        {
+            for (auto &id : delid)
+            {
+                // delete order success
+                auto itr = buyorders.find(id);
+                check(itr != buyorders.end(), "order does not exist in table");
+                itr = buyorders.erase(itr);
+            }
+        }
+
         //  Còn lại không match được hoặc chưa map đc tý nào thì ghi vào sell order
         if (asksize > 0)
         {
+            uint64_t unit_price = sellprice.amount;
             sellorder sell_receipt = {
                 sellorders.available_primary_key(),
                 from,
                 sell_quantity - (asset_ids.size() - asksize) * sellprice,
                 asset_ids,
+                unit_price,
                 now()};
             action(permission_level{get_self(), name("active")}, get_self(),
                    name("sellreceipt"),
@@ -328,66 +334,88 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
         // Check order mask
         auto askorder = sellorders.get_index<name("askorder")>();
         auto bid_quantity = quantity;
-        auto buyprice = quantity * 10000 / buy_ask;
+        auto buyprice = quantity / buy_ask;
         market bmarket = {market_->id, market_->base_token, market_->quote_nft, market_->min_sell, market_->min_buy, market_->fee, market_->frozen, market_->timestamp};
+        vector<uint64_t> delid;
         for (auto &order : askorder)
         {
-            auto sellprice = order.ask * 10000 / order.bid.size();
-            // nếu người bán, bán rẻ hơn giá cần mua => múc
-            if (sellprice <= buyprice)
+            auto bidsize = order.bid.size();
+            if (buyprice.amount < order.unit_price)
             {
-                if (buy_ask >= order.bid.size())
-                {
-                    // buy match
-                    bmatch match_ = {order.id, order.bid, from, order.ask, order.account, bmarket, now()};
-                    action(permission_level{get_self(), name("active")}, get_self(),
-                           name("buymatch"),
-                           std::make_tuple(match_))
-                        .send();
-                    // xóa sellorder
-                    // delete order success
-                    sellorders.erase(order);
-                    buy_ask -= order.bid.size();
-                    bid_quantity -= order.ask;
-                }
-                else
-                {
-                    // Tách nft để bán
-                    auto i = 0;
-                    vector<uint64_t> a_ids;
-                    auto asset_bs = order.bid;
-                    for (auto &a_id : asset_bs)
-                    {
-                        if (i < buy_ask)
-                        {
-                            a_ids.push_back(a_id);
-                            asset_bs.erase(asset_bs.begin() + i);
-                        }
-                        else
-                        {
-                            break;
-                        }
-                        i++;
-                    }
-                    // buy match
-                    bmatch match_ = {order.id, a_ids, from, (sellprice / 10000) * buy_ask, order.account, bmarket, now()};
-                    action(permission_level{get_self(), name("active")}, get_self(),
-                           name("buymatch"),
-                           std::make_tuple(match_))
-                        .send();
-                    // update lại sellorder
-                    sellorders.modify(order, get_self(), [&](auto &v)
-                                      {
-                                            v.ask = order.ask - (sellprice / 10000) * buy_ask;
-                                            v.bid =  asset_bs; });
-                    buy_ask = 0;
-                    bid_quantity -= (sellprice / 10000) * buy_ask;
-                    break;
-                }
+                break;
+            }
+
+            if (buy_ask == 0)
+            {
+                break;
+            }
+
+            // nếu người bán, bán rẻ hơn giá cần mua => múc
+            if (buy_ask >= bidsize)
+            {
+                // buy match
+                bmatch match_ = {order.id, order.bid, from, order.ask, order.account, bmarket, now()};
+                action(permission_level{get_self(), name("active")}, get_self(),
+                       name("buymatch"),
+                       std::make_tuple(match_))
+                    .send();
+                matchbtransfer(match_);
+                buy_ask -= bidsize;
+                bid_quantity -= order.ask;
+
+                // xóa sellorder
+                delid.push_back(order.id);
             }
             else
             {
+                // Tách nft để bán
+                auto i = 0;
+                vector<uint64_t> a_ids;
+                vector<uint64_t> asset_remaning;
+                for (auto &a_id : order.bid)
+                {
+                    if (i < buy_ask)
+                    {
+                        a_ids.push_back(a_id);
+                    }
+                    else
+                    {
+                        asset_remaning.push_back(a_id);
+                    }
+                    i++;
+                }
+                // buy match
+                asset a_unit_price(order.unit_price, market_->base_token.sym);
+                auto sellaccept = a_unit_price * buy_ask;
+                bmatch match_ = {order.id, a_ids, from, sellaccept, order.account, bmarket, now()};
+                action(permission_level{get_self(), name("active")}, get_self(),
+                       name("buymatch"),
+                       std::make_tuple(match_))
+                    .send();
+                matchbtransfer(match_);
+                buy_ask = 0;
+                bid_quantity -= sellaccept;
+                // update lại sellorder
+                auto askremaining = order.ask - sellaccept;
+                auto askremaining_price = askremaining / asset_remaning.size();
+                uint64_t askremaining_amount = askremaining_price.amount;
+                sellorders.modify(order, get_self(), [&](auto &v)
+                                  {
+                                            v.ask = askremaining;
+                                            v.bid =  asset_remaning;
+                                            v.unit_price = askremaining_amount; });
                 break;
+            }
+        }
+
+        // del sellorder
+        if (delid.size() > 0)
+        {
+            for (auto &id : delid)
+            {
+                auto itr = sellorders.find(id);
+                check(itr != sellorders.end(), "order does not exist in table");
+                itr = sellorders.erase(itr);
             }
         }
 
@@ -397,20 +425,25 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
             // Mua hết rồi thì trả tiền dư
             if (buy_ask == 0)
             {
-                // Tranfer asset to order account
-                action(permission_level{get_self(), name("active")}, market_->base_token.contract,
-                       name("transfer"),
-                       std::make_tuple(get_self(), from, bid_quantity, string("refund | DEX | athenaic.exchange")))
-                    .send();
+                if (bid_quantity.amount > 0)
+                {
+                    // Tranfer asset to order account
+                    action(permission_level{get_self(), name("active")}, market_->base_token.contract,
+                           name("transfer"),
+                           std::make_tuple(get_self(), from, bid_quantity, string("refund | DEX | athenaic.io")))
+                        .send();
+                }
             }
             else
             {
                 // Còn thì cho vào biên nhận để match lần sau
+                uint64_t unit_price = buyprice.amount;
                 buyorder buy_receipt = {
                     buyorders.available_primary_key(),
                     from,
                     buy_ask,
                     bid_quantity,
+                    unit_price,
                     now()};
                 action(permission_level{get_self(), name("active")}, get_self(),
                        name("buyreceipt"),
@@ -421,7 +454,8 @@ ACTION awmarket::matchnfts(name from, name to, asset quantity, std::string memo)
         else
         {
             // else match
-            buyorder buy_receipt = {buyorders.available_primary_key(), from, buy_ask, quantity, now()};
+            uint64_t unit_price = buyprice.amount;
+            buyorder buy_receipt = {buyorders.available_primary_key(), from, buy_ask, quantity, unit_price, now()};
             action(permission_level{get_self(), name("active")}, get_self(),
                    name("buyreceipt"),
                    std::make_tuple(market_id, buy_receipt))
@@ -440,6 +474,7 @@ ACTION awmarket::sellreceipt(uint64_t market_id, sellorder order)
         v.account = order.account;
         v.ask = order.ask;
         v.bid = order.bid;
+        v.unit_price = order.unit_price;
         v.timestamp = order.timestamp; });
 }
 
@@ -453,6 +488,7 @@ ACTION awmarket::buyreceipt(uint64_t market_id, buyorder order)
         v.account = order.account;
         v.ask = order.ask;
         v.bid = order.bid;
+        v.unit_price = order.unit_price;
         v.timestamp = order.timestamp; });
 }
 
@@ -470,7 +506,7 @@ ACTION awmarket::cancelbuy(name executor, uint64_t market_id, uint64_t order_id)
     // trả tiền cho người mua
     action(permission_level{get_self(), name("active")}, market_->base_token.contract,
            name("transfer"),
-           std::make_tuple(get_self(), cancelorder->account, cancelorder->bid, string("cancel order | DEX | athenaic.exchange")))
+           std::make_tuple(get_self(), cancelorder->account, cancelorder->bid, string("cancel order | DEX | athenaic.io")))
         .send();
     buyorders.erase(cancelorder);
 }
@@ -489,12 +525,12 @@ ACTION awmarket::cancelsell(name executor, uint64_t market_id, uint64_t order_id
     // trả nft cho người bán
     action(permission_level{get_self(), name("active")}, market_->quote_nft.contract,
            name("transfer"),
-           std::make_tuple(get_self(), cancelorder->account, cancelorder->bid, string("cancel order | DEX | athenaic.exchange")))
+           std::make_tuple(get_self(), cancelorder->account, cancelorder->bid, string("cancel order | DEX | athenaic.io")))
         .send();
     sellorders.erase(cancelorder);
 }
 
-ACTION awmarket::removeorder(uint64_t market_id)
+ACTION awmarket::removemarket(uint64_t market_id)
 {
     require_auth(get_self());
     auto sellorders = sell_order_s(get_self(), market_id);
@@ -506,6 +542,28 @@ ACTION awmarket::removeorder(uint64_t market_id)
     }
     auto buyorder = buyorders.begin();
     while (buyorder != buyorders.end())
+    {
+        buyorder = buyorders.erase(buyorder);
+    }
+}
+
+ACTION awmarket::removesorder(uint64_t market_id, uint64_t order_id)
+{
+    require_auth(get_self());
+    auto sellorders = sell_order_s(get_self(), market_id);
+    auto sellorder = sellorders.find(order_id);
+    if (sellorder != sellorders.end())
+    {
+        sellorder = sellorders.erase(sellorder);
+    }
+}
+
+ACTION awmarket::removeborder(uint64_t market_id, uint64_t order_id)
+{
+    require_auth(get_self());
+    auto buyorders = buy_order_s(get_self(), market_id);
+    auto buyorder = buyorders.find(order_id);
+    if (buyorder != buyorders.end())
     {
         buyorder = buyorders.erase(buyorder);
     }

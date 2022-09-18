@@ -86,6 +86,10 @@
                     "type": "asset"
                 },
                 {
+                    "name": "unit_price",
+                    "type": "uint64"
+                },
+                {
                     "name": "timestamp",
                     "type": "uint32"
                 }
@@ -290,11 +294,39 @@
             ]
         },
         {
-            "name": "removeorder",
+            "name": "removeborder",
             "base": "",
             "fields": [
                 {
                     "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "order_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "removemarket",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                }
+            ]
+        },
+        {
+            "name": "removesorder",
+            "base": "",
+            "fields": [
+                {
+                    "name": "market_id",
+                    "type": "uint64"
+                },
+                {
+                    "name": "order_id",
                     "type": "uint64"
                 }
             ]
@@ -328,6 +360,10 @@
                 {
                     "name": "bid",
                     "type": "uint64[]"
+                },
+                {
+                    "name": "unit_price",
+                    "type": "uint64"
                 },
                 {
                     "name": "timestamp",
@@ -462,8 +498,18 @@
             "ricardian_contract": ""
         },
         {
-            "name": "removeorder",
-            "type": "removeorder",
+            "name": "removeborder",
+            "type": "removeborder",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "removemarket",
+            "type": "removemarket",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "removesorder",
+            "type": "removesorder",
             "ricardian_contract": ""
         },
         {

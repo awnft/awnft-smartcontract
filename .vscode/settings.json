@@ -23,6 +23,16 @@
         "cstdlib": "cpp",
         "type_traits": "cpp",
         "limits": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "bitset": "cpp",
+        "utility": "cpp",
+        "optional": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "ratio": "cpp",
+        "system_error": "cpp",
+        "functional": "cpp",
+        "variant": "cpp",
+        "any": "cpp"
     }
 }
