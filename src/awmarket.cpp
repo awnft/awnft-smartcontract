@@ -18,9 +18,17 @@ void awmarket::matchbtransfer(bmatch record)
            std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.io")))
         .send();
     // trả tiền cho người bán
+    auto quantity = record.bid;
+    if (record.mk.fee > 0)
+    {
+        // fee
+        auto fee_quantity = (record.bid * record.mk.fee) / 100;
+        quantity -= fee_quantity;
+    }
+
     action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
            name("transfer"),
-           std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.io")))
+           std::make_tuple(get_self(), record.bidder, quantity, string("order match | DEX | athenaic.io")))
         .send();
 }
 
@@ -32,9 +40,16 @@ void awmarket::matchstransfer(smatch record)
            std::make_tuple(get_self(), record.bidder, record.bid, string("order match | DEX | athenaic.io")))
         .send();
     // trả tiền cho người mua
+    auto quantity = record.ask;
+    if (record.mk.fee > 0)
+    {
+        // fee
+        auto fee_quantity = (record.ask * record.mk.fee) / 100;
+        quantity -= fee_quantity;
+    }
     action(permission_level{get_self(), name("active")}, record.mk.base_token.contract,
            name("transfer"),
-           std::make_tuple(get_self(), record.asker, record.ask, string("order match | DEX | athenaic.io")))
+           std::make_tuple(get_self(), record.asker, quantity, string("order match | DEX | athenaic.io")))
         .send();
 }
 
@@ -518,43 +533,4 @@ ACTION awmarket::cancelsell(name executor, uint64_t market_id, uint64_t order_id
            std::make_tuple(get_self(), cancelorder->account, cancelorder->bid, string("cancel order | DEX | athenaic.io")))
         .send();
     sellorders.erase(cancelorder);
-}
-
-ACTION awmarket::removemarket(uint64_t market_id)
-{
-    require_auth(get_self());
-    auto sellorders = sell_order_s(get_self(), market_id);
-    auto buyorders = buy_order_s(get_self(), market_id);
-    auto sellorder = sellorders.begin();
-    while (sellorder != sellorders.end())
-    {
-        sellorder = sellorders.erase(sellorder);
-    }
-    auto buyorder = buyorders.begin();
-    while (buyorder != buyorders.end())
-    {
-        buyorder = buyorders.erase(buyorder);
-    }
-}
-
-ACTION awmarket::removesorder(uint64_t market_id, uint64_t order_id)
-{
-    require_auth(get_self());
-    auto sellorders = sell_order_s(get_self(), market_id);
-    auto sellorder = sellorders.find(order_id);
-    if (sellorder != sellorders.end())
-    {
-        sellorder = sellorders.erase(sellorder);
-    }
-}
-
-ACTION awmarket::removeborder(uint64_t market_id, uint64_t order_id)
-{
-    require_auth(get_self());
-    auto buyorders = buy_order_s(get_self(), market_id);
-    auto buyorder = buyorders.find(order_id);
-    if (buyorder != buyorders.end())
-    {
-        buyorder = buyorders.erase(buyorder);
-    }
 }

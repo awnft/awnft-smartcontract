@@ -294,44 +294,6 @@
             ]
         },
         {
-            "name": "removeborder",
-            "base": "",
-            "fields": [
-                {
-                    "name": "market_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "order_id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "removemarket",
-            "base": "",
-            "fields": [
-                {
-                    "name": "market_id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
-            "name": "removesorder",
-            "base": "",
-            "fields": [
-                {
-                    "name": "market_id",
-                    "type": "uint64"
-                },
-                {
-                    "name": "order_id",
-                    "type": "uint64"
-                }
-            ]
-        },
-        {
             "name": "sellmatch",
             "base": "",
             "fields": [
@@ -495,21 +457,6 @@
         {
             "name": "openmarket",
             "type": "openmarket",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "removeborder",
-            "type": "removeborder",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "removemarket",
-            "type": "removemarket",
-            "ricardian_contract": ""
-        },
-        {
-            "name": "removesorder",
-            "type": "removesorder",
             "ricardian_contract": ""
         },
         {

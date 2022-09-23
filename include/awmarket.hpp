@@ -127,9 +127,6 @@ public:
    };
    ACTION cancelbuy(name executor, uint64_t market_id, uint64_t order_id);
    ACTION cancelsell(name executor, uint64_t market_id, uint64_t order_id);
-   ACTION removemarket(uint64_t market_id);
-   ACTION removesorder(uint64_t market_id, uint64_t order_id);
-   ACTION removeborder(uint64_t market_id, uint64_t order_id);
    ACTION buymatch(bmatch record);
    ACTION sellmatch(smatch record);
    ACTION sellreceipt(uint64_t market_id, sellorder order);
